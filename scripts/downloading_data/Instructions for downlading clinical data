@@ -1,0 +1,3 @@
+Here are two files you may use to download the clinical trials
+1) If you are on Mac OS or Linux, use the download_data.R file to call "download_data(path)", where "path" is the directory where you want your "Data" folder to be created in.
+2) If you are on Windows, use the ipynb notebook and run it on Google Colab to download and unzip the clinical data on Google Drive. You may then download that data locally to use (there are issues with untarring files in Windows, but unzipping through Google Drive works).
