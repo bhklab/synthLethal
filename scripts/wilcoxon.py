@@ -1,46 +1,73 @@
+from lib2to3.pytree import WildcardPattern
 import pandas as pd
 import scipy as sp
+import json
 
 from scipy import stats
 
+# /depmap_data
+# ...CRISPR_gene_effect.csv
+# ...CCLE_expression.csv
+# /scripts
+# ... wilcoxon.py
 DATASETS = '../depmap_data/'
 
 def load_dataset(filename):
     return pd.read_csv(filename)
 
-if __name__ == '__main__':
-    # /depmap_data
-    # ...CRISPR_gene_effect.csv
-    # ...CCLE_expression.csv
-    # /scripts
-    # ... wilcoxon.py
-    gene_effect = load_dataset(DATASETS + 'CRISPR_gene_effect.csv')
-    expression = load_dataset(DATASETS + 'CCLE_expression.csv')
-
+def compute_essentiality_association(essentiality_data_path, gene_exp_data_path, method="ISLE", n=10):
+    """
+    essentiality_data_path: path to depmap essentiality data
+    gene_exp_data_path: Path to depmap gene expression data
+    method: method to compute the essentiality association
+    - "ISLE" (default): Wilcoxon tercile method
+    n: number of genes
+    - 10 (default): 10 of gene A x 10 of gene B
+    - "all": runs the whole dataset
+    """
+    gene_effect = load_dataset(essentiality_data_path)
+    expression = load_dataset(gene_exp_data_path)
 
     # slicing two datasets to have same cell lines
     cell_lines_1 = gene_effect['DepMap_ID']
     cell_lines_2 = expression.iloc[:, 0]
     cell_lines = pd.Series(list(set(cell_lines_1) & set(cell_lines_2)))
     gene_effect = gene_effect[gene_effect['DepMap_ID'].isin(cell_lines)]
-    print(gene_effect)
     expression = expression[expression.iloc[:, 0].isin(cell_lines)]
-    print(expression)
     # they have same cell lines (1005 rows)
 
+    if (method == "ISLE"):
+        perform_isle_method(gene_effect, expression, n)
+
+    print('done!')
+
+    return
+
+def perform_isle_method(gene_effect, expression, n):
+    # Assuming gene_effect and expression already has same cell lines
     total_cell_lines = gene_effect.shape[0]
     print(total_cell_lines)
     benchmark = total_cell_lines // 3
 
     wilcoxon_results = {}
 
-    for i in range(1, 5):
+    total_gene_As = n+1
+    total_gene_Bs = n+1
+    if n == "all":
+        total_gene_As = len(gene_effect.columns)
+        total_gene_Bs = len(expression.columns)
+
+    for i in range(1, total_gene_As):
+
+        if (i % 10 == 0):
+            print(i)
+
         x = gene_effect.iloc[:, [0,i]]
         gene_A = list(x)[1]
 
         wilcoxon_results[gene_A] = {}
 
-        for j in range(1, 5):
+        for j in range(1, total_gene_Bs):
             y = expression.iloc[:, [0,j]]
             gene_B = list(y)[1]
 
@@ -60,12 +87,24 @@ if __name__ == '__main__':
 
             # perform the wilcoxon test
             wilcoxon = sp.stats.wilcoxon(essentiality_bottom, essentiality_top)
-            print(gene_A, gene_B)
-            print(wilcoxon)
+            # print(gene_A, gene_B)
+            # print(wilcoxon)
 
             # saving in matrix of wilcoxon results
             wilcoxon_results[gene_A][gene_B] = wilcoxon
 
-    print(wilcoxon_results)
+    wilcoxon_results_df = pd.DataFrame.from_dict(wilcoxon_results)
+
+    with open('wilcoxon_results2.json', 'w') as fp:
+        json.dump(wilcoxon_results, fp)
+
+    return wilcoxon_results_df
+
+
+if __name__ == '__main__':
+    essentiality_path = DATASETS + 'CRISPR_gene_effect.csv'
+    expression_path = DATASETS + 'CCLE_expression.csv'
+    compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10)
+
 
     
