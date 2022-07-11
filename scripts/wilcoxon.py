@@ -1,4 +1,5 @@
 from lib2to3.pytree import WildcardPattern
+from operator import ge
 import pandas as pd
 import scipy as sp
 import json
@@ -15,7 +16,7 @@ DATASETS = '../depmap_data/'
 def load_dataset(filename):
     return pd.read_csv(filename)
 
-def compute_essentiality_association(essentiality_data_path, gene_exp_data_path, method="ISLE", n=10):
+def compute_essentiality_association(essentiality_data_path, gene_exp_data_path, method="ISLE", n=10, tissue='None'):
     """
     essentiality_data_path: path to depmap essentiality data
     gene_exp_data_path: Path to depmap gene expression data
@@ -24,6 +25,11 @@ def compute_essentiality_association(essentiality_data_path, gene_exp_data_path,
     n: number of genes
     - 10 (default): 10 of gene A x 10 of gene B
     - "all": runs the whole dataset
+    tissue: filter by specific tissue type
+    - "None" (default): do not filter by tissue type (take all tissues)
+    - "pan": filter by Pancreatic Cancer tissues
+    = "lung": filter by Lung Cancer tissues
+    - "breast": filter by Bresat Cancer tissues
     """
     gene_effect = load_dataset(essentiality_data_path)
     expression = load_dataset(gene_exp_data_path)
@@ -36,12 +42,44 @@ def compute_essentiality_association(essentiality_data_path, gene_exp_data_path,
     expression = expression[expression.iloc[:, 0].isin(cell_lines)]
     # they have same cell lines (1005 rows)
 
-    if (method == "ISLE"):
-        perform_isle_method(gene_effect, expression, n)
+    if (tissue != "None"):
+        genes_types = tissue_specific_info()
+        if (tissue == 'pan'):
+            print('pan')
+            filtered_genes = genes_types[genes_types['primary_disease'] == 'Pancreatic Cancer']
+        elif (tissue == 'lung'):
+            filtered_genes = genes_types[genes_types['primary_disease'] == 'Lung Cancer']
+            print('lung')
+        elif (tissue == 'breast'):
+            print('breast')
+            filtered_genes = genes_types[genes_types['primary_disease'] == 'Breast Cancer']
+        else:
+            print('invalid tissue type! Available: "None"/"pan"/"lung"/"breast"')
+            return
+
+        filtered = pd.Series(list(filtered_genes.iloc[:,0]))
+
+        gene_effect = gene_effect[gene_effect['DepMap_ID'].isin(filtered)]
+        expression = expression[expression['Unnamed: 0'].isin(filtered)]
+
+        if (method == "ISLE"):
+            wilcoxon_results, df = perform_isle_method(gene_effect, expression, n)
+            json_name = 'wilcoxon_results_' + tissue + '.json'
+            with open(json_name, 'w') as fp:
+                json.dump(wilcoxon_results, fp)
+            return df
+
+    else:  # all tissues
+        if (method == "ISLE"):
+            wilcoxon_results, df = perform_isle_method(gene_effect, expression, n)
+            with open('wilcoxon_results_all.json', 'w') as fp:
+                json.dump(wilcoxon_results, fp)
+            return df
 
     print('done!')
 
     return
+
 
 def perform_isle_method(gene_effect, expression, n):
     # Assuming gene_effect and expression already has same cell lines
@@ -95,16 +133,30 @@ def perform_isle_method(gene_effect, expression, n):
 
     wilcoxon_results_df = pd.DataFrame.from_dict(wilcoxon_results)
 
-    with open('wilcoxon_results2.json', 'w') as fp:
-        json.dump(wilcoxon_results, fp)
+    return wilcoxon_results, wilcoxon_results_df
 
-    return wilcoxon_results_df
+def tissue_specific_info():
+    sample_info_path = DATASETS + 'sample_info.csv'
+    info = load_dataset(sample_info_path)
+    # umm = info['primary_disease']
+    # print(umm.unique())
+    #     ['Kidney Cancer' 'Leukemia' 'Lung Cancer' 'Non-Cancerous' 'Sarcoma'
+    #  'Lymphoma' 'Colon/Colorectal Cancer' 'Pancreatic Cancer' 'Gastric Cancer'
+    #  'Rhabdoid' 'Endometrial/Uterine Cancer' 'Esophageal Cancer'
+    #  'Breast Cancer' 'Brain Cancer' 'Ovarian Cancer' 'Bone Cancer' 'Myeloma'
+    #  'Head and Neck Cancer' 'Bladder Cancer' 'Skin Cancer' 'Bile Duct Cancer'
+    #  'Prostate Cancer' 'Cervical Cancer' 'Thyroid Cancer' 'Neuroblastoma'
+    #  'Eye Cancer' 'Liposarcoma' 'Gallbladder Cancer' 'Teratoma' 'Unknown'
+    #  'Liver Cancer' 'Adrenal Cancer' 'Embryonal Cancer']
+    genes_types = info[['DepMap_ID', 'primary_disease']]
+    return genes_types
 
 
 if __name__ == '__main__':
     essentiality_path = DATASETS + 'CRISPR_gene_effect.csv'
     expression_path = DATASETS + 'CCLE_expression.csv'
-    compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10)
-
+    compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10, 'pan')
+    compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10, 'breast')
+    compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10, 'lung')
 
     
