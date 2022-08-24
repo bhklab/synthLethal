@@ -16,7 +16,7 @@ DATASETS = '../depmap_data/'
 def load_dataset(filename):
     return pd.read_csv(filename)
 
-def compute_essentiality_association(essentiality_data_path, gene_exp_data_path, method="ISLE", n=10, tissue='None'):
+def compute_essentiality_association(essentiality_data_path, gene_exp_data_path, method="ISLE", n=10, tissue='None', bimodal=False):
     """
     essentiality_data_path: path to depmap essentiality data
     gene_exp_data_path: Path to depmap gene expression data
@@ -30,6 +30,7 @@ def compute_essentiality_association(essentiality_data_path, gene_exp_data_path,
     - "pan": filter by Pancreatic Cancer tissues
     = "lung": filter by Lung Cancer tissues
     - "breast": filter by Bresat Cancer tissues
+    bimodal: True to only consider bimodal genes in the gene expression data. False to consider all genes.
     """
     gene_effect = load_dataset(essentiality_data_path)
     expression = load_dataset(gene_exp_data_path)
@@ -38,6 +39,19 @@ def compute_essentiality_association(essentiality_data_path, gene_exp_data_path,
     cell_lines_1 = gene_effect['DepMap_ID']
     cell_lines_2 = expression.iloc[:, 0]
     cell_lines = pd.Series(list(set(cell_lines_1) & set(cell_lines_2)))
+    bimodals = pd.read_csv('bimodal.csv')
+
+    genes = gene_effect.columns
+    bimodal_filtered=['DepMap_ID']
+    bimodals = bimodals['Symbol']
+    for gene in genes:
+        spliced = gene.split(' (')[0]
+        if spliced in list(bimodals):
+            bimodal_filtered.append(gene)
+
+    if bimodal:
+        gene_effect = gene_effect[bimodal_filtered]
+
     gene_effect = gene_effect[gene_effect['DepMap_ID'].isin(cell_lines)]
     expression = expression[expression.iloc[:, 0].isin(cell_lines)]
     # they have same cell lines (1005 rows)
@@ -138,6 +152,11 @@ def perform_isle_method(gene_effect, expression, n):
 def tissue_specific_info():
     sample_info_path = DATASETS + 'sample_info.csv'
     info = load_dataset(sample_info_path)
+    # umm = info['primary_disease'].unique()
+
+    # for x in umm:
+    #     genes_types[genes_types['primary_disease'] == 'Pancreatic Cancer']
+
     # umm = info['primary_disease']
     # print(umm.unique())
     #     ['Kidney Cancer' 'Leukemia' 'Lung Cancer' 'Non-Cancerous' 'Sarcoma'
@@ -149,14 +168,23 @@ def tissue_specific_info():
     #  'Eye Cancer' 'Liposarcoma' 'Gallbladder Cancer' 'Teratoma' 'Unknown'
     #  'Liver Cancer' 'Adrenal Cancer' 'Embryonal Cancer']
     genes_types = info[['DepMap_ID', 'primary_disease']]
+
+    # for x in umm:
+    #     print(x)
+    #     print(genes_types[genes_types['primary_disease'] == x].shape)
     return genes_types
 
 
 if __name__ == '__main__':
+
+    # tissue_specific_info()
+
+
     essentiality_path = DATASETS + 'CRISPR_gene_effect.csv'
     expression_path = DATASETS + 'CCLE_expression.csv'
-    compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10, 'pan')
-    compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10, 'breast')
-    compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10, 'lung')
+    print(essentiality_path)
+    compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10, 'pan', True)
+    # compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10, 'breast')
+    # compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10, 'lung')
 
     
