@@ -3,7 +3,8 @@ from operator import ge
 import pandas as pd
 import scipy as sp
 import json
-
+import os
+from multiprocessing import Process, Manager, Queue
 from scipy import stats
 
 # /depmap_data
@@ -11,15 +12,16 @@ from scipy import stats
 # ...CCLE_expression.csv
 # /scripts
 # ... wilcoxon.py
-DATASETS = '../depmap_data/'
+
 
 def load_dataset(filename):
     return pd.read_csv(filename)
 
-def compute_essentiality_association(essentiality_data_path, gene_exp_data_path, method="ISLE", n=10, tissue='None', bimodal=False):
+def compute_essentiality_association(datapath, method="ISLE", n=10, tissue='None', bimodal=False):
     """
-    essentiality_data_path: path to depmap essentiality data
-    gene_exp_data_path: Path to depmap gene expression data
+    datapath: path to depmap data (folder that includes expression and essentiality data)
+    #   essentiality_path: path to depmap essentiality data
+    #   gene_exp_data_path: Path to depmap gene expression data
     method: method to compute the essentiality association
     - "ISLE" (default): Wilcoxon tercile method
     n: number of genes
@@ -32,8 +34,12 @@ def compute_essentiality_association(essentiality_data_path, gene_exp_data_path,
     - "breast": filter by Bresat Cancer tissues
     bimodal: True to only consider bimodal genes in the gene expression data. False to consider all genes.
     """
-    gene_effect = load_dataset(essentiality_data_path)
-    expression = load_dataset(gene_exp_data_path)
+
+    essentiality_path = os.path.join(datapath, 'CRISPR_gene_effect.csv')
+    expression_path = os.path.join(datapath, 'CCLE_expression.csv')
+
+    gene_effect = load_dataset(essentiality_path)
+    expression = load_dataset(expression_path)
 
     # slicing two datasets to have same cell lines
     cell_lines_1 = gene_effect['DepMap_ID']
@@ -57,7 +63,7 @@ def compute_essentiality_association(essentiality_data_path, gene_exp_data_path,
     # they have same cell lines (1005 rows)
 
     if (tissue != "None"):
-        genes_types = tissue_specific_info()
+        genes_types = tissue_specific_info(datapath)
         if (tissue == 'pan'):
             print('pan')
             filtered_genes = genes_types[genes_types['primary_disease'] == 'Pancreatic Cancer']
@@ -95,13 +101,12 @@ def compute_essentiality_association(essentiality_data_path, gene_exp_data_path,
     return
 
 
-def perform_isle_method(gene_effect, expression, n):
+def perform_isle_method(gene_effect, expression, n, useParallel = False):
     # Assuming gene_effect and expression already has same cell lines
     total_cell_lines = gene_effect.shape[0]
     print(total_cell_lines)
     benchmark = total_cell_lines // 3
 
-    wilcoxon_results = {}
 
     total_gene_As = n+1
     total_gene_Bs = n+1
@@ -109,48 +114,97 @@ def perform_isle_method(gene_effect, expression, n):
         total_gene_As = len(gene_effect.columns)
         total_gene_Bs = len(expression.columns)
 
-    for i in range(1, total_gene_As):
+    if useParallel == 0:
+      wilcoxon_results = {}
+      for i in range(1, total_gene_As):
 
         if (i % 10 == 0):
             print(i)
 
         x = gene_effect.iloc[:, [0,i]]
         gene_A = list(x)[1]
-
         wilcoxon_results[gene_A] = {}
-
+          
         for j in range(1, total_gene_Bs):
-            y = expression.iloc[:, [0,j]]
-            gene_B = list(y)[1]
+              y = expression.iloc[:, [0,j]]
+              gene_B = list(y)[1]
+  
+              # get cell lines in bottom 1/3 and top 1/3 of expression for a gene B
+              y = y.sort_values(by=list(y)[1:])
+              bottom_third = y.head(benchmark).iloc[:, 0]
+              top_third = y.tail(benchmark).iloc[:, 0]
+              bottom_third = list(bottom_third)
+              top_third = list(top_third)
 
-            # get cell lines in bottom 1/3 and top 1/3 of expression for a gene B
-            y = y.sort_values(by=list(y)[1:])
-            bottom_third = y.head(benchmark).iloc[:, 0]
-            top_third = y.tail(benchmark).iloc[:, 0]
-            bottom_third = list(bottom_third)
-            top_third = list(top_third)
+              # get essentiality_bottom = essentiality_A[cell line is in bottom 1/3 of gene B]
+              # and essentiality_top    = essentiality_A[cell line is in top 1/3 of gene B]
+              essentiality_top = x[x['DepMap_ID'].isin(top_third)]
+              essentiality_bottom = x[x['DepMap_ID'].isin(bottom_third)]
+              essentiality_top = list(essentiality_top.iloc[:, 1])
+              essentiality_bottom = list(essentiality_bottom.iloc[:,1])
+ 
+              # perform the wilcoxon test
+              wilcoxon = sp.stats.wilcoxon(essentiality_bottom, essentiality_top)
+              # print(gene_A, gene_B)
+              # print(wilcoxon)
 
-            # get essentiality_bottom = essentiality_A[cell line is in bottom 1/3 of gene B]
-            # and essentiality_top    = essentiality_A[cell line is in top 1/3 of gene B]
-            essentiality_top = x[x['DepMap_ID'].isin(top_third)]
-            essentiality_bottom = x[x['DepMap_ID'].isin(bottom_third)]
-            essentiality_top = list(essentiality_top.iloc[:, 1])
-            essentiality_bottom = list(essentiality_bottom.iloc[:,1])
+              # saving in matrix of wilcoxon results
+              wilcoxon_results[gene_A][gene_B] = wilcoxon
+    
+      wilcoxon_results_df = pd.DataFrame.from_dict(wilcoxon_results)
+      return wilcoxon_results, wilcoxon_results_df
+    
+    else:   # Use parallel
+        manager = Manager()
+        wilcoxonDict = manager.dict()
+     
+        queueList = [Queue() for i in range(numProcs)]
+        procList = [Process(target=isle_submethod, args=(queueList[i], FullModelResDict)) for i in range(numProcs)]
 
-            # perform the wilcoxon test
-            wilcoxon = sp.stats.wilcoxon(essentiality_bottom, essentiality_top)
-            # print(gene_A, gene_B)
-            # print(wilcoxon)
+        for proc in procList:
+          proc.start()
 
-            # saving in matrix of wilcoxon results
-            wilcoxon_results[gene_A][gene_B] = wilcoxon
+        for i in range(len(parGrid)):
+          queueList[i%numProcs].put(parGrid[i])
+ 
+        for queue in queueList:
+          queue.put(-1)
 
-    wilcoxon_results_df = pd.DataFrame.from_dict(wilcoxon_results)
+        for proc in procList:
+          proc.join()
 
-    return wilcoxon_results, wilcoxon_results_df
+        wilcoxon_results = pd.DataFrame.from_dict(wilcoxonDict._getvalue())
+        return wilcoxon_results, wilcoxonDict._getvalue()
 
-def tissue_specific_info():
-    sample_info_path = DATASETS + 'sample_info.csv'
+          
+
+def isle_submethod(gene_effect, expression, i, j, resDict):
+    y = expression.iloc[:, [0,j]]
+    gene_B = list(y)[1]
+    
+    # get cell lines in bottom 1/3 and top 1/3 of expression for a gene B
+    y = y.sort_values(by=list(y)[1:])
+    bottom_third = y.head(benchmark).iloc[:, 0]
+    top_third = y.tail(benchmark).iloc[:, 0]
+    bottom_third = list(bottom_third)
+    top_third = list(top_third)
+
+    # get essentiality_bottom = essentiality_A[cell line is in bottom 1/3 of gene B]
+    # and essentiality_top    = essentiality_A[cell line is in top 1/3 of gene B]
+    essentiality_top = x[x['DepMap_ID'].isin(top_third)]
+    essentiality_bottom = x[x['DepMap_ID'].isin(bottom_third)]
+    essentiality_top = list(essentiality_top.iloc[:, 1])
+    essentiality_bottom = list(essentiality_bottom.iloc[:,1])
+
+    # perform the wilcoxon test
+    wilcoxon = sp.stats.wilcoxon(essentiality_bottom, essentiality_top)
+
+    # saving in matrix of wilcoxon results
+    resDict[gene_A][gene_B] = wilcoxon
+
+
+def tissue_specific_info(datapath):
+    sample_info_path = os.path.join(datapath, 'sample_info.csv')
     info = load_dataset(sample_info_path)
     # umm = info['primary_disease'].unique()
 
@@ -180,10 +234,13 @@ if __name__ == '__main__':
     # tissue_specific_info()
 
 
-    essentiality_path = DATASETS + 'CRISPR_gene_effect.csv'
-    expression_path = DATASETS + 'CCLE_expression.csv'
+    datapath = '../depmap_data/'
+
+    essentiality_path = datapath + 'CRISPR_gene_effect.csv'
+    expression_path = datapath + 'CCLE_expression.csv'
     print(essentiality_path)
-    compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10, 'pan', True)
+    compute_essentiality_association(datapath, "ISLE", 10, 'pan', True)
+ 
     # compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10, 'breast')
     # compute_essentiality_association(essentiality_path, expression_path, "ISLE", 10, 'lung')
 
