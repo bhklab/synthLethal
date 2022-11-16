@@ -1,0 +1,19 @@
+Package: synthLethal
+Title: BHK Lab package for analysis of synthetic lethal networks for drug sensitivity prediction.
+Version: 0.0.0.9000
+Authors@R: c(
+  person("Ian", "Smith", email="ianc.smith@mail.utoronto.ca", role=c("aut"), comment=c(ORCID="0000-0003-3957-4397")),
+  person("Andy", "Liu", email="andyw.liu@mail.utoronto.ca", role=c("aut")), 
+  person("Arthur", "Soenarto", email="arthur.soenarto@mail.utoronto.ca", role=c("aut")),
+  person("Luomeng", "Tan", email="luomeng.tan@mail.utoronto.ca", role=c("aut")),
+  person("Benjamin", "Haibe-Kains", email="benjamin.haibe.kains@utoronto.ca", role=c("aut", "cre"))
+  ) 
+Description: Synthetic Lethality is a relationship between two genes in a cell for which simultaneous inhibition of both genes
+  leads to cell death when inhibition of zero or one genes leaves cells viable. The concept of synthetic lethality is a promising
+  avenue for identification of biomarkers of drug sensitivity - specifically expression of genes that are synthetically lethal
+  with the drug target. This package builds on the method developed in SELECT (Synthetic lethality-mediated precision oncology 
+  Lee 2021) to assess the utility of synthetic lethality as a biomarker and implement methods for applying such a network. 
+License: 'use_mit_license()`
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.2
