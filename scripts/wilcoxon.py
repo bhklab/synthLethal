@@ -108,11 +108,12 @@ def perform_isle_method(gene_effect, expression, n, useParallel = False):
     benchmark = total_cell_lines // 3
 
 
-    total_gene_As = n+1
-    total_gene_Bs = n+1
     if n == "all":
         total_gene_As = len(gene_effect.columns)
         total_gene_Bs = len(expression.columns)
+    else: 
+        total_gene_As = n+1
+        total_gene_Bs = n+1
 
     if useParallel == 0:
       wilcoxon_results = {}
