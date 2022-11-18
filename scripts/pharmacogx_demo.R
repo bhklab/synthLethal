@@ -59,9 +59,11 @@ fdata <- fdata[rownames(fdata) %in% rownames(mygeneinfo)[mygeneinfo$gene_type ==
 rownames(fdata) <- mygeneinfo$gene_name[match(rownames(fdata), rownames(mygeneinfo))]
 
 
-mydrug <- "Sirolimus"
-mytarget <- "MTOR"
-  
+# mydrug <- "Sirolimus"
+# mytarget <- "MTOR"
+mydrug <- "Sorafenib"
+mytarget <- "BRAF"
+
 if (length(grep(mydrug, rownames(aacs), ignore.case=TRUE)) != 1){
   print("Warning: number of drugs matched does not equal 1.")
 }
@@ -71,17 +73,20 @@ yall <- aacs[grep(mydrug, rownames(aacs), ignore.case=TRUE), ]
 # Remove NAs - cell lines for which the drug was not assayed, or cell lines without rna-seq data
 missingcells <- colSums(is.na(fdata))
 
-x <- fdata[, (complete.cases(yall) & missingcells == 0)]
+x <- fdata[, (complete.cases(yall) & missingcells == 0)] 
 y <- yall[(complete.cases(yall) & missingcells == 0)]
 
 # Plug into model training
+source("pmodel_train.R")
+my_working_directory <- 'some_path'
+md_en <- pmodel_train(x,y, mydrug, "elasticnet", mytarget, my_working_directory, 'GSE119262')
+# md_en <- pharmcomodel_train(x,y, mydrug, model, mytarget)
 
-md_select <- pharmacomodel_train(x,y, mydrug, model="select", mytarget)
-md_en <- pharmcomodel_train(x,y, mydrug, model, mytarget)
+my_data <- get_clinical_data(paste(my_working_directory, "Data", sep="/"),"GSE119262")
 
-
+source("pmodel_apply.R")
 # Apply models
-pharmacomodel_apply(x, md_select, model="select")
+pmodel_apply(my_data$ex, my_data$res, md_en, drug="", modeltype="elasticnet")
 
 #x_clinical <- ReadClinicalData
 # Fix clinical data
