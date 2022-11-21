@@ -44,7 +44,7 @@ pmodel_train <- function(expr_mat, drug_response, drug, modeltype="elasticnet", 
       x, y,
       method = "glmnet",
       trControl = cv_5,
-      tuneLength = 10
+      tuneLength = 5
     )
     
   } else if (modeltype == "rf"){
