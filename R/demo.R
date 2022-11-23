@@ -2,9 +2,8 @@ library(PharmacoGx)
 
 # ==== helper functions ====
 
-train_models <- function(x, y, mydrug, modeltype="elasticnet"){
-  # genes <- rownames(x)[1:1000]
-  genes <- NULL
+train_models <- function(x, y, mydrug, modeltype="elasticnet", genes=NULL){
+
   elnmodel <- NULL
   rfmodel <- NULL
   
@@ -101,3 +100,63 @@ model_no_lung <- train_models(fdata, aacs, "Cisplatin")
 models_compare_tissue_specific <- resamples(list(lung_specific=model_lung$elnmodel, all_tissue=model_no_lung$elnmodel))
 summary(models_compare_tissue_specific)
 
+# ==== Clinical Datasets ====
+source("get_clinical_data.R")
+data_dir <- "~/Desktop/MBP_PhD/3rd_rotation/synthLethal/test/Data"
+
+# ===== GSE109211: Sorafenib treated liver cancer =====
+
+mydataset <- "GSE109211"
+mydrug <- "Sorafenib"
+
+clinical_data <- get_clinical_data(data_dir, mydataset)
+ex <- clinical_data$ex
+genes <- rownames(ex)
+
+GSE109211_model <- train_models(fdata, aacs, mydrug, modeltype = "all", genes = genes)
+
+setwd("~/Desktop/MBP_PhD/3rd_rotation/synthLethal/R")
+source("pmodel_apply.R")
+
+GSE109211_pred <- pmodel_apply(GSE109211_model$elnmodel, clinical_data)
+GSE109211_pred <- pmodel_apply(GSE109211_model$rfmodel, clinical_data)
+
+
+# ===== GSE109211: Bortezomib treated multiple myeloma =====
+
+mydataset <- "GSE68871"
+mydrug <- "Bortezomib"
+
+clinical_data <- get_clinical_data(data_dir, mydataset)
+ex <- clinical_data$ex
+genes <- rownames(ex)
+
+GSE68871_model <- train_models(fdata, aacs, mydrug, genes = genes)
+
+GSE68871_pred <- pmodel_apply(GSE68871_model$elnmodel, clinical_data)
+
+# ===== GSE41998: Doxorubicin/Paclitaxel treated breast cancer =====
+
+mydataset <- "GSE41998"
+mydrug <- "Paclitaxel" # or "Cyclophosphamide"
+
+clinical_data <- get_clinical_data(data_dir, mydataset)
+ex <- clinical_data$ex
+genes <- rownames(ex)
+
+GSE41998_model <- train_models(fdata, aacs, mydrug, genes = genes)
+
+GSE41998_pred <- pmodel_apply(GSE41998_model$elnmodel, clinical_data)
+
+# ===== GSE3964: Irinotecan treated colorectal cancer =====
+
+mydataset <- "GSE3964"
+mydrug <- "Irinotecan"
+
+clinical_data <- get_clinical_data(data_dir, mydataset)
+ex <- clinical_data$ex
+genes <- rownames(ex)
+
+GSE3964_model <- train_models(fdata, aacs, mydrug, genes = genes)
+
+GSE3964_pred <- pmodel_apply(GSE3964_model$elnmodel, clinical_data)
