@@ -17,7 +17,7 @@ from scipy import stats
 def load_dataset(filename):
     return pd.read_csv(filename)
 
-def compute_essentiality_association(datapath, method="ISLE", n=10, tissue='None', bimodal=False):
+def compute_essentiality_association(datapath, outpath=".", method="ISLE", n=10, tissue='None', bimodal=False):
     """
     datapath: path to depmap data (folder that includes expression and essentiality data)
     #   essentiality_path: path to depmap essentiality data
@@ -45,7 +45,7 @@ def compute_essentiality_association(datapath, method="ISLE", n=10, tissue='None
     cell_lines_1 = gene_effect['DepMap_ID']
     cell_lines_2 = expression.iloc[:, 0]
     cell_lines = pd.Series(list(set(cell_lines_1) & set(cell_lines_2)))
-    bimodals = pd.read_csv('bimodal.csv')
+    bimodals = pd.read_csv('../data/bimodal.csv')
 
     genes = gene_effect.columns
     bimodal_filtered=['DepMap_ID']
@@ -84,15 +84,16 @@ def compute_essentiality_association(datapath, method="ISLE", n=10, tissue='None
 
         if (method == "ISLE"):
             wilcoxon_results, df = perform_isle_method(gene_effect, expression, n)
-            json_name = 'wilcoxon_results_' + tissue + '.json'
-            with open(json_name, 'w') as fp:
+            json_name = 'wilcoxon_results_' + tissue + '_n=' + str(n) + '.json'
+            with open(os.path.join(outpath, json_name), 'w') as fp:
                 json.dump(wilcoxon_results, fp)
             return df
 
     else:  # all tissues
         if (method == "ISLE"):
             wilcoxon_results, df = perform_isle_method(gene_effect, expression, n)
-            with open('wilcoxon_results_all.json', 'w') as fp:
+            json_name = 'wilcoxon_results_pancan_n=' + str(n) + '.json'
+            with open(os.path.join(outpath, json_name), 'w') as fp:
                 json.dump(wilcoxon_results, fp)
             return df
 
