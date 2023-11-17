@@ -3,6 +3,7 @@ Title: BHK Lab package for analysis of synthetic lethal networks for drug sensit
 Version: 0.0.0.9000
 Authors@R: c(
   person("Ian", "Smith", email="ianc.smith@mail.utoronto.ca", role=c("aut"), comment=c(ORCID="0000-0003-3957-4397")),
+  person("Amadeu", "Carceller", role=c("aut")),
   person("Andy", "Liu", email="andyw.liu@mail.utoronto.ca", role=c("aut")), 
   person("Arthur", "Soenarto", email="arthur.soenarto@mail.utoronto.ca", role=c("aut")),
   person("Luomeng", "Tan", email="luomeng.tan@mail.utoronto.ca", role=c("aut")),
@@ -13,7 +14,12 @@ Description: Synthetic Lethality is a relationship between two genes in a cell f
   avenue for identification of biomarkers of drug sensitivity - specifically expression of genes that are synthetically lethal
   with the drug target. This package builds on the method developed in SELECT (Synthetic lethality-mediated precision oncology 
   Lee 2021) to assess the utility of synthetic lethality as a biomarker and implement methods for applying such a network. 
-License: 'use_mit_license()`
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
+Imports: 
+    caret,
+    PharmacoGx,
+    pROC,
+    stats
