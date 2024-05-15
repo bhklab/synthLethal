@@ -8,7 +8,7 @@ In order to evaluate our networks:
 
 1. Download the zip file of the repository and extract it. 
 2. Open RStudio
-3. Source load_SL_pairs.R, enlight_validation.R, calculate_score.R, ctrpv2_validation, calculate_score_ctrpv2
+3. Source the following files in the R folder: load_SL_pairs.R, enlight_validation.R, calculate_score.R, ctrpv2_validation, calculate_score_ctrpv2
 4. Install the corresponding packages if necessary.
 5. Set the working directory to the synthLethal folder
    ```
