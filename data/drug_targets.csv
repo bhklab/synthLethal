@@ -1,30 +1,30 @@
-﻿drug,genes,tissue,mRNA
-Anti-PD1,"PDCD1,CD274",Melanoma,
-Anti-PD1_2,"PDCD1,CD274",GBM,
-Anti-PD1_3,"PDCD1,CD274",RCC,
-Anti-PD1_4,"PDCD1,CD274",Breast,
-Anti-PD1_5,"PDCD1,CD274",Melanoma,
-Bevacizumab,VEGFA,Colorectal,
-Bevacizumab_2,VEGFA,Colorectal,
-Bevacizumab_3,VEGFA,Breast,
-Bevacizumab_4,VEGFA,Colorectal,
-BRAFi_1,BRAF,Melanoma,
-BRAFi_2,BRAF,Melanoma,
-BRAFi_3,BRAF,Melanoma,
-Cetuximab,EGFR,Head and neck,
-Lapatinib,"EGFR,ERBB2",Breast,
-MGH_Alpelisib,PIK3CA,Breast,
-MGH_Ribociclib,"CDK4,CDK6",Breast,
-MK2206,"AKT1,AKT2,AKT3",Breast,
-Rituximab,MS4A1,CLL,
-Selinexor,XPO1,GBM,
-Sorafenib,"BRAF,RAF1,FLT4,KDR,FLT1,FLT3,KIT,FGFR1,RET,PDGFRB",HCC,
-Sorafenib_2,"BRAF,RAF1,FLT4,KDR,FLT1,FLT3,KIT,FGFR1,RET,PDGFRB",NSCLC,
-Tipifarnib_1,"FNTB,HRAS,NRAS,KRAS",AML,
-Tipifarnib_2,"FNTB,HRAS,NRAS,KRAS",AML,
-Trastuzumab,ERBB2,Breast,
-Trastuzumab_2,ERBB2,Breast,
-Trastuzumab_3,ERBB2,Breast,
-Trastuzumab_4,ERBB2,Breast,
-Trastuzumab_5,ERBB2,Breast,
-Vismodegib,SMO,BCC,
+﻿drug,genes,tissue,mRNA,cancer_type
+Anti-PD1,"PDCD1,CD274",melanoma,,Melanoma
+Anti-PD1_2,"PDCD1,CD274",head and neck,,GBM
+Anti-PD1_3,"PDCD1,CD274",kidney,,RCC
+Anti-PD1_4,"PDCD1,CD274",breast,,Breast
+Anti-PD1_5,"PDCD1,CD274",melanoma,,Melanoma
+Bevacizumab,VEGFA,colorectal,,Colorectal
+Bevacizumab_2,VEGFA,colorectal,,Colorectal
+Bevacizumab_3,VEGFA,breast,,Breast
+Bevacizumab_4,VEGFA,colorectal,,Colorectal
+BRAFi_1,BRAF,melanoma,,Melanoma
+BRAFi_2,BRAF,melanoma,,Melanoma
+BRAFi_3,BRAF,melanoma,,Melanoma
+Cetuximab,EGFR,head and neck,,Head and neck
+Lapatinib,"EGFR,ERBB2",breast,,Breast
+MGH_Alpelisib,PIK3CA,breast,,Breast
+MGH_Ribociclib,"CDK4,CDK6",breast,,Breast
+MK2206,"AKT1,AKT2,AKT3",breast,,Breast
+Rituximab,MS4A1,bone marrow,,CLL
+Selinexor,XPO1,head and neck,,GBM
+Sorafenib,"BRAF,RAF1,FLT4,KDR,FLT1,FLT3,KIT,FGFR1,RET,PDGFRB",liver,,HCC
+Sorafenib_2,"BRAF,RAF1,FLT4,KDR,FLT1,FLT3,KIT,FGFR1,RET,PDGFRB",lung,,NSCLC
+Tipifarnib_1,"FNTB,HRAS,NRAS,KRAS",bone marrow,,AML
+Tipifarnib_2,"FNTB,HRAS,NRAS,KRAS",bone marrow,,AML
+Trastuzumab,ERBB2,breast,,Breast
+Trastuzumab_2,ERBB2,breast,,Breast
+Trastuzumab_3,ERBB2,breast,,Breast
+Trastuzumab_4,ERBB2,breast,,Breast
+Trastuzumab_5,ERBB2,breast,,Breast
+Vismodegib,SMO,skin,,BCC
