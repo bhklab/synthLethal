@@ -26,3 +26,4 @@ The rest of the networks are also stored in the data folder. The create_network.
     SL_pairs <- create_network()
     results <- validate_enlight(SL_pairs)
    ```
+Scripts used for network analysis are available at scripts/scripts_by_Amadeu
