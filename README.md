@@ -13,7 +13,6 @@ In order to evaluate our networks:
 5. Set the working directory to the synthLethal folder
    ```
    setwd('C:/Users/you/synthLethal')
-   datapath <- file.path(getwd(), "data")
    ```
 6. Run the following code:
    ```
