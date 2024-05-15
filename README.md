@@ -18,7 +18,6 @@ In order to evaluate our networks:
    ```
     SL_pairs <- load_SL_pairs()
     results <- validate_enlight(SL_pairs)
-    results <- validate_ctrpv2(SL_pairs)
    ```
 The rest of the networks are also stored in the data folder. The create_network.R function is used to create the synthetic lethal networks. With all the data available, it is possible to run:
  ```
