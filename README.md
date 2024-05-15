@@ -8,13 +8,13 @@ In order to evaluate our networks:
 
 1. Download the zip file of the repository and extract it. 
 2. Open RStudio
-3. Source the following files in the R folder: load_SL_pairs.R, enlight_validation.R, calculate_score.R, auxiliary_functions.R, ctrpv2_validation.R, calculate_score_ctrpv2.R
+3. Source the following files in the R folder: load_SL_pairs.R, enlight_validation.R, calculate_score.R, and auxiliary_functions.R
 4. Install the corresponding packages if necessary.
 5. Set the working directory to the synthLethal folder
    ```
    setwd('C:/Users/you/synthLethal')
    ```
-6. Run the following code, which will directly plot the results of the clinical and in vitro evaluations in your plot window:
+6. Run the following code, which will directly plot the results of the clinical evaluations in your plot window:
    ```
     SL_pairs <- load_SL_pairs()
     results <- validate_enlight(SL_pairs)
